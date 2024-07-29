@@ -1,8 +1,7 @@
 "use client";
-
 import { useState } from 'react';
-import { useQuery,useMutation,useQueryClient, HydrationBoundary, DehydratedState } from '@tanstack/react-query';
-import { fetchPosts,deletePost } from "@/app/actions/postAction";
+import { useQuery, useMutation, useQueryClient, HydrationBoundary, DehydratedState } from '@tanstack/react-query';
+import { fetchPosts, deletePost } from "@/app/actions/postAction";
 import Add from './add/page';
 
 type Post = {
@@ -17,7 +16,6 @@ type Pagination = {
   totalPosts: number;
 };
 
-
 type AppProps = {
   dehydratedState: DehydratedState;
 };
@@ -25,9 +23,9 @@ type AppProps = {
 export default function App({ dehydratedState }: AppProps) {
   const [page, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [dataSource,setDataSource]=useState({});
-  const [isMessage,setIsMessage]=useState(false);
-  const [messageData,setMessageData]=useState('');
+  const [dataSource, setDataSource] = useState({});
+  const [isMessage, setIsMessage] = useState(false);
+  const [messageData, setMessageData] = useState('');
   const queryClient = useQueryClient();
 
   const { data, error } = useQuery<{ data: Post[], pagination: Pagination }>({
@@ -35,8 +33,8 @@ export default function App({ dehydratedState }: AppProps) {
     queryFn: () => fetchPosts(page.toString(), pageSize.toString()),
   });
 
+  const dataLength = data?.data?.length;
   const [isOpen, setIsOpen] = useState(false);
-
 
   const deleteMutation = useMutation({
     mutationFn: (postId: number) => deletePost(postId),
@@ -82,14 +80,13 @@ export default function App({ dehydratedState }: AppProps) {
         <div className="w-full p-8 bg-white rounded-lg shadow-lg">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-3xl font-bold text-gray-800 mt-6">All Posts</h1>
-            {isMessage && <span className='text-2xl font-bold text-black bg-green-400 p-2 rounded-lg'>{messageData}</span>
-            }
+            {isMessage && <span className='text-2xl font-bold text-black bg-green-400 p-2 rounded-lg'>{messageData}</span>}
             <button
               type='button'
               className='bg-blue-500 text-white rounded-md p-2 hover:bg-blue-800'
               onClick={() => {
-                setIsOpen(true)
-                setDataSource({})
+                setIsOpen(true);
+                setDataSource({});
               }}
             >
               Add Post
@@ -105,58 +102,68 @@ export default function App({ dehydratedState }: AppProps) {
               </tr>
             </thead>
             <tbody>
-              {data?.data?.map((post) => (
-                <tr key={post.id} className="border-b">
-                  <td className="px-4 py-2">{post.title}</td>
-                  <td className="px-4 py-2">{post.content}</td>
-                  <td className='px-4 py-2'>
-                    <button className='bg-blue-500 text-white rounded-md p-2 hover:bg-blue-800'
-                      onClick={() => handleEdit(post)}
-                    >Edit</button>
-                    <button className='bg-red-500 text-white rounded-md p-2 ml-2 hover:bg-red-800'
-                      onClick={() => handleDelete(post)}
-                    >Delete</button>
+              {dataLength ? (
+                data?.data?.map((post) => (
+                  <tr key={post.id} className="border-b">
+                    <td className="px-4 py-2">{post.title}</td>
+                    <td className="px-4 py-2">{post.content}</td>
+                    <td className='px-4 py-2'>
+                      <button className='bg-blue-500 text-white rounded-md p-2 hover:bg-blue-800'
+                        onClick={() => handleEdit(post)}
+                      >Edit</button>
+                      <button className='bg-red-500 text-white rounded-md p-2 ml-2 hover:bg-red-800'
+                        onClick={() => handleDelete(post)}
+                      >Delete</button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={3} className="text-center py-4">
+                    No Data
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
 
-          <div className="flex justify-center mt-4">
-            <button
-              className='bg-gray-300 text-gray-700 rounded-md p-2 hover:bg-gray-400'
-              onClick={() => handlePageChange(page - 1)}
-              disabled={page === 1}
-            >
-              Previous
-            </button>
-            <div className="flex mx-4">
-              {pageNumbers.map((number) => (
-                <button
-                  key={number}
-                  className={`mx-1 p-2 rounded-md ${page === number ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}
-                  onClick={() => handlePageChange(number)}
-                >
-                  {number}
-                </button>
-              ))}
+          {dataLength && data?.pagination?.totalPages > 1 && (
+            <div className="flex justify-center mt-4">
+              <button
+                className='bg-gray-300 text-gray-700 rounded-md p-2 hover:bg-gray-400'
+                onClick={() => handlePageChange(page - 1)}
+                disabled={page === 1}
+              >
+                Previous
+              </button>
+              <div className="flex mx-4">
+                {pageNumbers.length > 0 && pageNumbers.map((number) => (
+                  <button
+                    key={number}
+                    className={`mx-1 p-2 rounded-md ${page === number ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}
+                    onClick={() => handlePageChange(number)}
+                  >
+                    {number}
+                  </button>
+                ))}
+              </div>
+              <button
+                className='bg-gray-300 text-gray-700 rounded-md p-2 hover:bg-gray-400'
+                onClick={() => handlePageChange(page + 1)}
+                disabled={page === data?.pagination?.totalPages}
+              >
+                Next
+              </button>
             </div>
-            <button
-              className='bg-gray-300 text-gray-700 rounded-md p-2 hover:bg-gray-400'
-              onClick={() => handlePageChange(page + 1)}
-              disabled={page === data?.pagination?.totalPages}
-            >
-              Next
-            </button>
-          </div>
+          )}
         </div>
       </div>
       {isOpen && <Add isOpen={isOpen} dataSource={dataSource}
         isMessage={isMessage}
         messageData={messageData}
-       setIsMessage={setIsMessage}
-        setMessageData={setMessageData} 
-         setIsOpen={setIsOpen} />}
+        setIsMessage={setIsMessage}
+        setMessageData={setMessageData}
+        setIsOpen={setIsOpen} />}
     </HydrationBoundary>
   );
 }
